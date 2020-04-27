@@ -2,38 +2,43 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component {
+constructor(props) {
+  super(props);
+  this.state = {
+    username: '',
+  };
+
+  this.handleChange = this.handleChange.bind(this);
+  this.handleSubmit = this.handleSubmit.bind(this);
 }
 
+//called when the textbox is changed 
+handleChange(event) {
+  this.setState({username: event.target.value});
+}
 
-class WelcomeScreen extends React.Component { 
-  render () { 
+//called when the enter button is pressed 
+handleSubmit(event) {
+  alert('A name was submitted: ' + this.state.username);
+  event.preventDefault();
+}
+
+  render() {
     return (
       <div>
-        Insert username
+        <form onSubmit={this.handleSubmit}>
+          <label>
+            Insert username: 
+            <input type="text" value={this.state.username} onChange={this.handleChange}/>
+          </label>
+          <input type = "submit" value="Enter"></input>
+        </form>
       </div>
-
     );
   }
 }
+
 
 class Game extends React.Component {
   render() {
@@ -47,7 +52,7 @@ class Game extends React.Component {
 
 class Chat extends React.Component {
   render() {
-    return ( 
+    return (
       <div>
         pass
       </div>
