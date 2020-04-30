@@ -1,11 +1,14 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import socketIOClient from "socket.io-client";
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+
+//????
+const ENDPOINT = "http://127.0.0.1:3030";
 
 class App extends React.Component {
   constructor(props) {
@@ -43,15 +46,113 @@ class App extends React.Component {
           
         </Form>
 
+        <Game/>
+
+        <AppTest/>
+
+      </div>
+    );
+  }
+}
+
+class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    //stepNumber: reflects the move displayed to the user 
+    this.state = {
+      history: [
+        {
+          squares: Array(9).fill(null),
+        },
+      ],
+      stepNumber: 0,
+      xIsNext: true,
+    };
+  }
+
+  //Function handleClick to define what happens when
+  // the square component is clicked
+  handleClick(i) {
+    //ensures that when we go back we make a new move 
+    // from that point and throw away future history 
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+
+    //If someone has won then stop the game
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+
+    //if our var xIsNext is true do "X" else "O"
+    squares[i] = this.state.xIsNext ? "X" : "O";
+
+    this.setState({
+      history: history.concat([
+        {
+          squares: squares,
+        },
+      ]),
+      stepNumber: history.length,
+      xIsNext: !this.state.xIsNext,
+    });
+  }
+
+  //func to return the board to a previous state
+  jumpTo(step) {
+      this.setState({
+          stepNumber: step,
+          xIsNext: (step % 2) === 0,
+      });
+  }
+
+  render() {
+    //Add the turn history into the game
+    const history = this.state.history;
+    //render the step number 
+    const current = history[this.state.stepNumber];
+    const winner = calculateWinner(current.squares);
+
+    //using map, map our history of moves to React elements (buttons)
+    const moves = history.map((step,move) => {
+        const desc = move ?
+        'Go to move #' + move : 
+        'Go to game start';
+        return (
+            //give the list item a key so that it can be properly rerendered
+            <li key={move}>
+                <button onClick={() => this.jumpTo(move)}>{desc}</button>
+            </li>
+        );
+    });
+
+    let status;
+    if (winner) {
+      status = "Winner: " + winner;
+    } else {
+      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+    }
+
+    return (
+      <div className="game">
+        <div className="game-board">
+          <GameBoard
+            squares={current.squares}
+            onClick={(i) => this.handleClick(i)}
+          />
+        </div>
+        <div className="game-info">
+          <div>{status}</div>
+          <ol>{moves}</ol>
+        </div>
       </div>
     );
   }
 }
 
 
+class GameBoard extends React.Component {
 
-
-class Game extends React.Component {
   renderSquare(i) {
     return (
       <Square
@@ -87,14 +188,52 @@ class Game extends React.Component {
 //Renders one square in the tictactoe board 
 function Square(props) {
   return (
-    <Button className="square" onClick={props.onClick}>
+    <Button className="square" variant="outline-dark" onClick={props.onClick}>
       {props.value}
     </Button>
   );
 }
 
+//Given an arr of 9 squares this func will check for winner
+// Returns 'X' or 'O' or null
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
 
 
+
+function AppTest() { 
+  const [response, setResponse] = useState('');
+
+  useEffect(() => {
+    const socket = socketIOClient(ENDPOINT);
+    socket.on("FromAPI", data => {
+      setResponse(data);
+    });
+  }, []); 
+
+  return (
+    <p>
+      It's <time dateTime={response}>{response}</time>
+    </p>
+  );
+}
 
 
 class Chat extends React.Component {
