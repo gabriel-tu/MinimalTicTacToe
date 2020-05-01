@@ -17,6 +17,10 @@ let interval;
 // Run when client connects 
 io.on('connection', (socket) => {
     console.log('New Connection...');
+    /*
+    all the real time clock stuff delete this in the future. 
+
+    this makes it so that it only runs on one page 
     if (interval) {
         clearInterval(interval);
     }
@@ -25,7 +29,22 @@ io.on('connection', (socket) => {
       console.log("Client disconnected");
       clearInterval(interval);
     });
+    */
+
+
+    
+    //When we get the GamePos console log it and 
+    //reemit it to everyone (in the future change to emit to
+    // only the other player)
+    socket.on('GamePos', (pos) => {
+        console.log(pos)
+        socket.broadcast.emit("GamePos", pos);
+    });
 });
+
+
+
+
 
 //Takes socket as an argument, and emits the message "FromAPI" 
 // which will contain the timestamp

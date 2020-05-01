@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import socketIOClient from "socket.io-client";
 import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -48,7 +46,7 @@ class App extends React.Component {
 
         <Game/>
 
-        <AppTest/>
+        {/*<AppTest/>*/}
 
       </div>
     );
@@ -59,12 +57,14 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     //stepNumber: reflects the move displayed to the user 
+    //boardContents: filled with thats in each square
     this.state = {
       history: [
         {
           squares: Array(9).fill(null),
         },
       ],
+      boardContents: Array(9).fill(null),
       stepNumber: 0,
       xIsNext: true,
     };
@@ -85,7 +85,29 @@ class Game extends React.Component {
     }
 
     //if our var xIsNext is true do "X" else "O"
-    squares[i] = this.state.xIsNext ? "X" : "O";
+    //squares[i] = this.state.xIsNext ? "X" : "O";
+
+    squares[i] = "X"
+
+    //send the index of the squares to the backend
+    // so that we know which position to place a X/O
+
+    // the below line prevents the submission from refreshing the page 
+    // add the below line sometime haha
+    //e.preventDefault();
+
+    const socket = socketIOClient(ENDPOINT);
+
+    //send a 'GamePos' value to the backend 
+    // we will be sending the index of button pressed 
+    socket.emit('GamePos', i);
+
+
+    //receive data from the backend server 
+    socket.on('GamePos', (pos) => {
+      squares[pos] = "X"
+    });
+ 
 
     this.setState({
       history: history.concat([
@@ -217,6 +239,10 @@ function calculateWinner(squares) {
 }
 
 
+/*
+
+The real time clock that we do not need anymore,
+delete this later 
 
 function AppTest() { 
   const [response, setResponse] = useState('');
@@ -234,6 +260,7 @@ function AppTest() {
     </p>
   );
 }
+*/
 
 
 class Chat extends React.Component {
