@@ -46,8 +46,6 @@ class App extends React.Component {
 
         <Game/>
 
-        {/*<AppTest/>*/}
-
       </div>
     );
   }
@@ -57,16 +55,9 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     //stepNumber: reflects the move displayed to the user 
-    //boardContents: filled with thats in each square
+    //boardContents: filled with thats in each square ? maybe not? 
     this.state = {
-      history: [
-        {
-          squares: Array(9).fill(null),
-        },
-      ],
       boardContents: Array(9).fill(null),
-      stepNumber: 0,
-      xIsNext: true,
     };
   }
 
@@ -75,9 +66,8 @@ class Game extends React.Component {
   handleClick(i) {
     //ensures that when we go back we make a new move 
     // from that point and throw away future history 
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
+    const squares = this.state.boardContents;
+    console.log(squares);
 
     //If someone has won then stop the game
     if (calculateWinner(squares) || squares[i]) {
@@ -98,17 +88,28 @@ class Game extends React.Component {
 
     const socket = socketIOClient(ENDPOINT);
 
-    //send a 'GamePos' value to the backend 
-    // we will be sending the index of button pressed 
-    socket.emit('GamePos', i);
+    //create obj to be send back
+    // we have to +1 to stepnum as we did not 
+    // concat the new move to history yet
+    let gameData={
+      sqr: squares,
+    }; 
 
+    //send a 'GameState' value to the backend 
+    // we will be sending the index of button pressed 
+    socket.emit('GameDat', gameData);
 
     //receive data from the backend server 
-    socket.on('GamePos', (pos) => {
-      squares[pos] = "X"
-    });
- 
+    socket.on('GameDat', (gameData) => {
+      console.log(gameData.sqr);
 
+      this.setState({
+        boardContents: gameData.sqr
+      });
+      
+    });
+
+/*
     this.setState({
       history: history.concat([
         {
@@ -118,54 +119,30 @@ class Game extends React.Component {
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
     });
-  }
-
-  //func to return the board to a previous state
-  jumpTo(step) {
-      this.setState({
-          stepNumber: step,
-          xIsNext: (step % 2) === 0,
-      });
+    */
+    
   }
 
   render() {
-    //Add the turn history into the game
-    const history = this.state.history;
-    //render the step number 
-    const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-
-    //using map, map our history of moves to React elements (buttons)
-    const moves = history.map((step,move) => {
-        const desc = move ?
-        'Go to move #' + move : 
-        'Go to game start';
-        return (
-            //give the list item a key so that it can be properly rerendered
-            <li key={move}>
-                <button onClick={() => this.jumpTo(move)}>{desc}</button>
-            </li>
-        );
-    });
-
+    const winner = calculateWinner(this.state.boardContents);
     let status;
     if (winner) {
       status = "Winner: " + winner;
-    } else {
-      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
+
+    //try to get the backend data ? 
+    GetData(this);
 
     return (
       <div className="game">
         <div className="game-board">
           <GameBoard
-            squares={current.squares}
+            squares={this.state.boardContents}
             onClick={(i) => this.handleClick(i)}
           />
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{moves}</ol>
         </div>
       </div>
     );
@@ -238,30 +215,22 @@ function calculateWinner(squares) {
   return null;
 }
 
+function GetData (that) { 
+  const socket = socketIOClient(ENDPOINT);
+//receive data from the backend server 
+socket.on('GameDat', (gameData) => {
+  const squares = gameData.sqr;
 
-/*
+  console.log(squares);
+  //squares[gameData.pos] = "X"
 
-The real time clock that we do not need anymore,
-delete this later 
+  that.setState({
+    boardContents: squares,
+  });
+  
+});
 
-function AppTest() { 
-  const [response, setResponse] = useState('');
-
-  useEffect(() => {
-    const socket = socketIOClient(ENDPOINT);
-    socket.on("FromAPI", data => {
-      setResponse(data);
-    });
-  }, []); 
-
-  return (
-    <p>
-      It's <time dateTime={response}>{response}</time>
-    </p>
-  );
 }
-*/
-
 
 class Chat extends React.Component {
   render() {

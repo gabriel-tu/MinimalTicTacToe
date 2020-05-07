@@ -36,9 +36,9 @@ io.on('connection', (socket) => {
     //When we get the GamePos console log it and 
     //reemit it to everyone (in the future change to emit to
     // only the other player)
-    socket.on('GamePos', (pos) => {
-        console.log(pos)
-        socket.broadcast.emit("GamePos", pos);
+    socket.on('GameDat', (gameData) => {
+        console.log(gameData.sqr)
+        socket.broadcast.emit("GameDat", gameData);
     });
 });
 
